@@ -13,6 +13,7 @@
 
 require "zip"
 
+local package = package
 local LUA_ZPATH = LUA_ZPATH or ""
 
 local function parseZPath( path )
@@ -32,10 +33,15 @@ local function parseZPath( path )
 	return pathes
 end
 
-local function zipLoader( module )
+local function loadModule( module, ... )
+    local path = LUA_ZPATH
+    if( #arg > 0 ) then
+        path = arg[1]
+    end
+    package.zpath = path
     local name = string.gsub( module, '/', '.')
     local code = nil
-	for _,v in pairs(parseZPath( LUA_ZPATH )) do
+	for _,v in pairs(parseZPath( path )) do
 		local zip = zip.open( v )
 		if( zip ~= nil ) then
 			for f in zip:files() do
@@ -45,6 +51,8 @@ local function zipLoader( module )
 						local zf = zip:open( f.filename)
                         local cnt = zf:read("*all")
 						code = loadstring( cnt )
+--                        print('file in zip: '.. f.filename .. ' content: ' .. cnt )
+--                        print(code )
 						zf:close()
                         break
 					end
@@ -53,14 +61,12 @@ local function zipLoader( module )
             zip:close()
 		end
 	end	
-    if( code ~= nil ) then
-    	package.loaded[module] = code
-    end
+
     return code
 end
 
-package.loaders[#package.loaders+1] = zipLoader
-package.zpath = LUA_ZPATH
+package.loaders[#package.loaders+1] = loadModule
+local M = { load = loadModule }
 
-return zipLoader
+return M
 
