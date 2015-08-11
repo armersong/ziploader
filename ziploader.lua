@@ -19,11 +19,12 @@ local LUA_ZPATH = LUA_ZPATH or ""
 local function parseZPath( path )
 	local pathes = {}
 	local pos = 1
+	local epos = #path
 	while( true ) do
 		local s,e = string.find( path, ';', pos)
 		if( s == nil ) then
-			if( #path >0 and pos == 1 ) then
-				pathes[ #pathes + 1 ] = path
+			if( pos ~= epos ) then
+				pathes[ #pathes + 1 ] = string.sub( path, pos, epos)
 			end 
 			break 
 		end
@@ -42,6 +43,7 @@ local function loadModule( module, ... )
     local name = string.gsub( module, '/', '.')
     local code = nil
 	for _,v in pairs(parseZPath( path )) do
+--		print('zip file :' .. v)
 		local zip = zip.open( v )
 		if( zip ~= nil ) then
 			for f in zip:files() do
